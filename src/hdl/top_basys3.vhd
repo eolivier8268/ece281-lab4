@@ -92,21 +92,85 @@ end top_basys3;
 architecture top_basys3_arch of top_basys3 is 
   
 	-- declare components and signals
+component elevator_controller_fsm is
+    Port ( i_clk     : in  STD_LOGIC;
+           i_reset   : in  STD_LOGIC;
+           i_stop    : in  STD_LOGIC;
+           i_up_down : in  STD_LOGIC;
+           o_floor   : out STD_LOGIC_VECTOR (3 downto 0)           
+         );
+end component elevator_controller_fsm;
 
-  
+component clock_divider is
+	generic ( constant k_DIV : natural := 2	);
+	port ( 	i_clk    : in std_logic;
+			i_reset  : in std_logic;		   
+			o_clk    : out std_logic		   
+	);
+end component clock_divider;
+
+component sevenSegDecoder is
+    Port ( 
+        i_D : in STD_LOGIC_VECTOR (3 downto 0);
+        o_S : out STD_LOGIC_VECTOR (6 downto 0)
+    );
+end component sevenSegDecoder;
+
+signal w_clk : std_logic;
+signal w_floor : std_logic_vector(3 downto 0);
+
 begin
 	-- PORT MAPS ----------------------------------------
-
+    controller_inst: elevator_controller_fsm
+    port map(
+        i_reset => btnR or btnU,
+        i_stop => sw(0),
+        i_up_down => sw(1),
+        i_clk => w_clk,
+        o_floor => w_floor
+    );
+    
+    clockdiv_inst: clock_divider
+    generic map ( k_DIV => 50000000 )
+    port map(
+        i_clk => clk,
+        i_reset => btnU or btnL,
+        o_clk => w_clk
+    );
 	
+	decoder_inst: sevenSegDecoder
+	port map(
+	   i_D => w_floor,
+	   o_S => seg
+	);
 	
 	-- CONCURRENT STATEMENTS ----------------------------
 	
 	-- LED 15 gets the FSM slow clock signal. The rest are grounded.
-	
+	led(15) <= w_clk;
+	led(14) <= '0';
+	led(13) <= '0';
+	led(12) <= '0';
+	led(11) <= '0';
+	led(10) <= '0';
+	led(9) <= '0';
+	led(8) <= '0';
+	led(7) <= '0';
+	led(6) <= '0';
+	led(5) <= '0';
+	led(4) <= '0';
+	led(3) <= '0';
+	led(2) <= '0';
+	led(1) <= '0';
+	led(0) <= '0';
 
 	-- leave unused switches UNCONNECTED. Ignore any warnings this causes.
 	
 	-- wire up active-low 7SD anodes (an) as required
+	an(0) <= '1';
+	an(1) <= '1';
+	an(2) <= '1';
+	an(3) <= '0';
 	-- Tie any unused anodes to power ('1') to keep them off
 	
 end top_basys3_arch;
