@@ -164,18 +164,18 @@ begin
 	led(6) <= '0';
 	led(5) <= '0';
 	led(4) <= '0';
-	led(3) <= '0';
-	led(2) <= '0';
-	led(1) <= '0';
-	led(0) <= '0';
+	led(3) <= w_floor(3);
+	led(2) <= w_floor(2);
+	led(1) <= w_floor(1);
+	led(0) <= w_floor(0);
 
 	-- leave unused switches UNCONNECTED. Ignore any warnings this causes.
 	
 	-- wire up active-low 7SD anodes (an) as required
-	an(0) <= '1';
+	an(0) <= '0';
 	an(1) <= '1';
 	an(2) <= '1';
-	an(3) <= '0';
+	an(3) <= '1';
 	-- Tie any unused anodes to power ('1') to keep them off
 	
 end top_basys3_arch;
