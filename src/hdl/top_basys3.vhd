@@ -118,12 +118,17 @@ end component sevenSegDecoder;
 
 signal w_clk : std_logic;
 signal w_floor : std_logic_vector(3 downto 0);
+signal w_clk_reset : std_logic;
+signal w_controller_reset : std_logic;
 
 begin
 	-- PORT MAPS ----------------------------------------
+    w_clk_reset <= btnU or btnL;
+    w_controller_reset <= btnR or btnU;
+    
     controller_inst: elevator_controller_fsm
     port map(
-        i_reset => btnR or btnU,
+        i_reset => w_controller_reset,
         i_stop => sw(0),
         i_up_down => sw(1),
         i_clk => w_clk,
@@ -134,7 +139,7 @@ begin
     generic map ( k_DIV => 50000000 )
     port map(
         i_clk => clk,
-        i_reset => btnU or btnL,
+        i_reset => w_clk_reset,
         o_clk => w_clk
     );
 	
