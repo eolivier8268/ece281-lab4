@@ -130,39 +130,24 @@ begin
   
 	-- Output logic
     with f_Q select
---        o_floor <= x"1" when s_floor1,
---        x"3" when s_floor3,
---        x"4" when s_floor4,
---        x"5" when s_floor5,
---        x"6" when s_floor6,
---        x"7" when s_floor7,
---        x"8" when s_floor8,
---        x"9" when s_floor9,
---        x"a" when s_floor10,
---        x"b" when s_floor11,
---        x"c" when s_floor12,
---        x"d" when s_floor13,
---        x"e" when s_floor14,
---        x"f" when s_floor15,
---        x"0" when s_floor16,
---        x"2" when others; -- default is floor 2
-          o_floor <= "0001" when s_floor1,
-          "0011" when s_floor3,
-          "0100" when s_floor4,
-          "0101" when s_floor5,
-          "0110" when s_floor6,
-          "0111" when s_floor7,
-          "1000" when s_floor8,
-          "1001" when s_floor9,
-          "1010" when s_floor10,
-          "1011" when s_floor11,
-          "1100" when s_floor12,
-          "1101" when s_floor13,
-          "1110" when s_floor14,
-          "1111" when s_floor15,
-          "0000" when s_floor16,
-          "0010" when others;
-          
+        o_floor <= x"0" when s_floor1,
+        x"1" when s_floor2,
+        x"3" when s_floor4,
+        x"4" when s_floor5,
+        x"5" when s_floor6,
+        x"6" when s_floor7,
+        x"7" when s_floor8,
+        x"8" when s_floor9,
+        x"9" when s_floor10,
+        x"a" when s_floor11,
+        x"b" when s_floor12,
+        x"c" when s_floor13,
+        x"d" when s_floor14,
+        x"e" when s_floor15,
+        x"f" when s_floor16,
+        x"2" when others; -- default is floor 2
+
+
 	
 	-------------------------------------------------------------------------------------------------------
 	
@@ -171,13 +156,13 @@ begin
 	register_proc : process (i_clk, i_reset)
     begin
         -- synchronous reset
-        if i_reset = '1' then
-            f_Q <= s_floor2;
-        -- if elevator is enabled, advance floors
-        elsif rising_edge(i_clk) then
-            if i_stop = '0' then
+        if rising_edge(i_clk) then
+            if i_reset = '1' then
+                f_Q <= s_floor2;
+            -- if elevator is enabled, advance floors
+            elsif i_stop = '0' then
                 f_Q <= f_Q_next;
-        -- if not enabled, stay at current floor
+            -- if not enabled, stay at current floor
             else
                 f_Q <= f_Q;
             end if;

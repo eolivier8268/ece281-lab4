@@ -26,4 +26,8 @@ env:
 
 If successful then GHDL will quietly exit with a `0` code.
 If any of the `assert` statements fail **with** `severity failure` then GHDL will cease the simulation and exit with non-zero code; this will also cause the workflow to fail.
-Assert statements of other severity levels, such as "error" w
+Assert statements of other severity levels, such as "error"
+
+## Documentation Statement  
+
+In this lab, C3C Ian Miles helped me to design the reset process for the elevator controller. He explained that the process as I designed it was an asynchronous reset. Based on his feedback, I moved the reset statement inside of an "if" statement connected to the rising edge of the clock.

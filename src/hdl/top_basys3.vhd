@@ -116,22 +116,37 @@ component sevenSegDecoder is
     );
 end component sevenSegDecoder;
 
-signal w_clk : std_logic;
+component TDM4 is
+	generic ( constant k_WIDTH : natural  := 4); -- bits in input and output
+    Port ( i_clk		: in  STD_LOGIC;
+           i_reset		: in  STD_LOGIC; -- asynchronous
+           i_D3 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		   i_D2 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		   i_D1 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		   i_D0 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		   o_data		: out STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		   o_sel		: out STD_LOGIC_VECTOR (3 downto 0)	-- selected data line (one-cold)
+	);
+end component TDM4;
+
+signal w_clk_cntrlr : std_logic;
+signal w_clk_tdm: std_logic;
 signal w_floor : std_logic_vector(3 downto 0);
 signal w_clk_reset : std_logic;
 signal w_controller_reset : std_logic;
+signal w_tens_digit : std_logic_vector(3 downto 0);
+signal w_ones_digit : std_logic_vector(3 downto 0);
+signal w_curr_digit : std_logic_vector(3 downto 0);
+signal w_sel : std_logic_vector(3 downto 0);
 
 begin
-	-- PORT MAPS ----------------------------------------
-    w_clk_reset <= btnU or btnL;
-    w_controller_reset <= btnR or btnU;
-    
+	-- PORT MAPS ----------------------------------------  
     controller_inst: elevator_controller_fsm
     port map(
         i_reset => w_controller_reset,
         i_stop => sw(0),
         i_up_down => sw(1),
-        i_clk => w_clk,
+        i_clk => w_clk_cntrlr,
         o_floor => w_floor
     );
     
@@ -140,19 +155,62 @@ begin
     port map(
         i_clk => clk,
         i_reset => w_clk_reset,
-        o_clk => w_clk
+        o_clk => w_clk_cntrlr
+    );
+    
+    TDM_clockdiv_inst: clock_divider
+    generic map (k_DIV => 100000)
+    port map(
+        i_clk => clk,
+        i_reset => '0',
+        o_clk => w_clk_tdm
+    );
+    
+    TDM_inst: TDM4
+    generic map ( k_WIDTH => 4) -- bits in input and output
+    port map(
+        i_clk => w_clk_tdm,
+        i_reset => '0',
+        i_D0 => "0000",
+        i_D1 => "0000",
+        i_D2 => w_ones_digit,
+        i_D3 => w_tens_digit,
+        o_data => w_curr_digit,
+        o_sel => w_sel
     );
 	
 	decoder_inst: sevenSegDecoder
 	port map(
-	   i_D => w_floor,
+	   i_D => w_curr_digit,
 	   o_S => seg
 	);
 	
 	-- CONCURRENT STATEMENTS ----------------------------
+    w_tens_digit <= "0001" when ((w_floor = x"9") or 
+            (w_floor = x"a") or
+            (w_floor = x"b") or
+            (w_floor = x"c") or
+            (w_floor = x"d") or
+            (w_floor = x"e") or
+            (w_floor = x"f")
+            ) else "0000";
+
+    w_ones_digit <= x"0" when (w_floor = x"9") else
+            x"9" when (w_floor = x"8") else
+            x"8" when (w_floor = x"7") else
+            x"7" when (w_floor = x"6") else
+            x"6" when ( (w_floor = x"5") or (w_floor = x"f") ) else
+            x"5" when ( (w_floor = x"4") or (w_floor = x"e") ) else
+            x"4" when ( (w_floor = x"3") or (w_floor = x"d") ) else
+            x"3" when ( (w_floor = x"2") or (w_floor = x"c") ) else
+            x"1" when ( (w_floor = x"0") or (w_floor = x"a") ) else
+            x"2";
+
+    w_clk_reset <= btnU or btnL;
+    w_controller_reset <= btnR or btnU;
 	
 	-- LED 15 gets the FSM slow clock signal. The rest are grounded.
-	led(15) <= w_clk;
+	led(15) <= w_clk_cntrlr;
 	led(14) <= '0';
 	led(13) <= '0';
 	led(12) <= '0';
@@ -164,18 +222,19 @@ begin
 	led(6) <= '0';
 	led(5) <= '0';
 	led(4) <= '0';
-	led(3) <= w_floor(3);
-	led(2) <= w_floor(2);
-	led(1) <= w_floor(1);
-	led(0) <= w_floor(0);
+	led(3) <= '0';
+	led(2) <= '0';
+	led(1) <= '0';
+	led(0) <= '0';
 
 	-- leave unused switches UNCONNECTED. Ignore any warnings this causes.
 	
-	-- wire up active-low 7SD anodes (an) as required
-	an(0) <= '0';
-	an(1) <= '1';
-	an(2) <= '1';
-	an(3) <= '1';
+    -- wire up active-low 7SD anodes (an) as required
+	an(3) <= w_sel(3);
+	an(2) <= w_sel(2);
+	
 	-- Tie any unused anodes to power ('1') to keep them off
+	an(1) <= '1';
+	an(0) <= '1';
 	
 end top_basys3_arch;
